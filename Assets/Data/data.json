@@ -1,0 +1,208 @@
+[
+  {
+    "id": "server-001",
+    "name": "Web Server 1",
+    "type": "server",
+    "status": "online",
+    "cpu_usage": 0.65,
+    "memory_usage": 0.80,
+    "ip_address": "10.10.1.10",
+    "location": "IN-West",
+    "datacenter": "IND-01",
+    "last_updated": "2025-04-11T16:00:00Z",
+    "uptime": 86400,
+    "alerts": 0,
+    "is_critical": true,
+    "tags": ["frontend", "web", "critical"],
+    "metrics": {
+      "disk_usage": 0.55,
+      "network_io": 120,
+      "temperature": 64
+    },
+    "owners": ["team-web"]
+  },
+  {
+    "id": "api-002",
+    "name": "Auth API",
+    "type": "api",
+    "status": "error",
+    "response_time": 0.12,
+    "error_rate": 0.05,
+    "location": "IN-Central",
+    "datacenter": "IND-02",
+    "dependency": "server-001",
+    "last_updated": "2025-04-11T15:59:00Z",
+    "uptime": 23400,
+    "alerts": 3,
+    "is_critical": true,
+    "tags": ["backend", "auth", "high-priority"],
+    "metrics": {
+      "retry_count": 12
+    },
+    "owners": ["team-api"]
+  },
+  {
+    "id": "db-003",
+    "name": "User Database",
+    "type": "database",
+    "status": "online",
+    "connection_count": 120,
+    "storage_used": 0.70,
+    "location": "IN-East",
+    "datacenter": "IND-01",
+    "related_api": "api-002",
+    "last_updated": "2025-04-11T16:00:00Z",
+    "uptime": 125000,
+    "alerts": 1,
+    "is_critical": true,
+    "tags": ["database", "user-data"],
+    "metrics": {
+      "query_latency": 0.03,
+      "replication_lag": 0.01
+    },
+    "owners": ["team-db"]
+  },
+  {
+    "id": "lb-004",
+    "name": "Load Balancer 1",
+    "type": "loadbalancer",
+    "status": "online",
+    "active_connections": 550,
+    "throughput": 150,
+    "location": "IN-West",
+    "datacenter": "IND-01",
+    "backends": ["server-001", "server-005"],
+    "last_updated": "2025-04-11T15:58:00Z",
+    "uptime": 432000,
+    "alerts": 0,
+    "is_critical": true,
+    "tags": ["network", "balancer"],
+    "metrics": {
+      "packet_loss": 0.0,
+      "latency": 0.02
+    },
+    "owners": ["team-network"]
+  },
+  {
+    "id": "server-005",
+    "name": "App Server 2",
+    "type": "server",
+    "status": "warning",
+    "cpu_usage": 0.95,
+    "memory_usage": 0.90,
+    "ip_address": "10.10.1.12",
+    "location": "IN-West",
+    "datacenter": "IND-01",
+    "last_updated": "2025-04-11T15:59:30Z",
+    "uptime": 87000,
+    "alerts": 2,
+    "is_critical": false,
+    "tags": ["app", "backend"],
+    "metrics": {
+      "disk_usage": 0.85,
+      "temperature": 78
+    },
+    "owners": ["team-app"]
+  },
+  {
+    "id": "cache-006",
+    "name": "Redis Cache",
+    "type": "cache",
+    "status": "online",
+    "hit_rate": 0.85,
+    "miss_rate": 0.15,
+    "location": "IN-Central",
+    "datacenter": "IND-02",
+    "dependency": "db-003",
+    "last_updated": "2025-04-11T16:00:00Z",
+    "uptime": 200000,
+    "alerts": 0,
+    "is_critical": false,
+    "tags": ["cache", "redis"],
+    "metrics": {
+      "evictions": 4,
+      "memory_used": 0.66
+    },
+    "owners": ["team-cache"]
+  },
+  {
+    "id": "queue-007",
+    "name": "Message Queue",
+    "type": "queue",
+    "status": "online",
+    "queue_size": 250,
+    "consumer_count": 10,
+    "location": "IN-East",
+    "datacenter": "IND-01",
+    "last_updated": "2025-04-11T16:00:00Z",
+    "uptime": 100000,
+    "alerts": 0,
+    "is_critical": false,
+    "tags": ["messaging", "asynchronous"],
+    "metrics": {
+      "processing_rate": 25,
+      "dead_letter_count": 0
+    },
+    "owners": ["team-queue"]
+  },
+  {
+    "id": "monitor-008",
+    "name": "Monitoring Service",
+    "type": "monitoring",
+    "status": "online",
+    "alerts_count": 5,
+    "health_score": 0.98,
+    "location": "IN-Central",
+    "datacenter": "IND-02",
+    "last_updated": "2025-04-11T15:55:00Z",
+    "uptime": 300000,
+    "alerts": 0,
+    "is_critical": true,
+    "tags": ["monitoring", "metrics", "prometheus"],
+    "metrics": {
+      "scrape_interval": 15,
+      "data_retention_days": 30
+    },
+    "owners": ["team-devops"]
+  },
+  {
+    "id": "cdn-009",
+    "name": "CDN Edge 1",
+    "type": "cdn",
+    "status": "online",
+    "request_count": 1200,
+    "bandwidth_usage": 300,
+    "location": "IN-West",
+    "datacenter": "IND-03",
+    "last_updated": "2025-04-11T16:00:00Z",
+    "uptime": 500000,
+    "alerts": 0,
+    "is_critical": false,
+    "tags": ["cdn", "delivery"],
+    "metrics": {
+      "cache_hit_ratio": 0.92,
+      "origin_latency": 0.08
+    },
+    "owners": ["team-cdn"]
+  },
+  {
+    "id": "firewall-010",
+    "name": "Firewall",
+    "type": "firewall",
+    "status": "online",
+    "blocked_connections": 20,
+    "allowed_connections": 500,
+    "location": "IN-East",
+    "datacenter": "IND-03",
+    "last_updated": "2025-04-11T16:00:00Z",
+    "uptime": 400000,
+    "alerts": 0,
+    "is_critical": true,
+    "tags": ["security", "firewall"],
+    "metrics": {
+      "intrusion_attempts": 3,
+      "rule_count": 45
+    },
+    "owners": ["team-security"]
+  }
+]

@@ -1,12 +1,15 @@
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.Interactables;
-using UnityEngine.XR.Interaction.Toolkit.Filtering;
 using TMPro;
 using System;
 using System.Threading.Tasks;
 
-public class NodeController : XRGrabInteractable {
+#if ENABLE_XR
+using UnityEngine.XR;
+using UnityEngine.XR.Interaction.Toolkit;
+#endif
+
+public class NodeController : MonoBehaviour 
+{
     public SystemNode nodeData; // Data from DataLoader
     public GameObject infoPanel; // Assign a UI panel prefab in Inspector
 
@@ -17,113 +20,134 @@ public class NodeController : XRGrabInteractable {
     private float lastMetricUpdateTime;
     private const float METRIC_UPDATE_INTERVAL = 1f;
 
-    protected override void Awake() {
-        base.Awake();
-
+    private void Awake() 
+    {
         // Find DataLoader in the scene
         dataLoader = FindObjectOfType<DataLoader>();
-        if (dataLoader == null) {
+        if (dataLoader == null)
+        {
             Debug.LogError("DataLoader not found in the scene!");
         }
 
-        if (infoPanel != null) {
+        if (infoPanel != null) 
+        {
             spawnedInfoPanel = Instantiate(infoPanel, transform);
-            if (spawnedInfoPanel != null) {
+            if (spawnedInfoPanel != null)
+            {
                 spawnedInfoPanel.transform.localPosition = Vector3.up * 1.5f; // Position above node
                 infoText = spawnedInfoPanel.GetComponentInChildren<TextMeshProUGUI>();
-                if (infoText == null) {
+                if (infoText == null)
+                {
                     Debug.LogError("TextMeshProUGUI component not found in info panel!");
                 }
                 spawnedInfoPanel.SetActive(false);
-            } else {
+            }
+            else
+            {
                 Debug.LogError("Failed to instantiate info panel!");
             }
-        } else {
+        }
+        else
+        {
             Debug.LogWarning("Info panel prefab not assigned!");
         }
     }
 
-    private void Update() {
+    private void Update() 
+    {
         // Handle mouse input for non-VR interaction
-        if (Input.GetMouseButtonDown(0)) {
+        if (Input.GetMouseButtonDown(0)) 
+        {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out RaycastHit hit)) {
-                if (hit.collider.gameObject == gameObject) {
+            if (Physics.Raycast(ray, out RaycastHit hit)) 
+            {
+                if (hit.collider.gameObject == gameObject) 
+                {
                     Debug.Log("Tapped on: " + hit.collider.name);
-                    // Simulate XR selection for mouse interaction
-                    if (!isSelected) {
-                        OnSelectEntered(new SelectEnterEventArgs {
-                            interactorObject = null,
-                            interactableObject = this
-                        });
-                    } else {
-                        OnSelectExited(new SelectExitEventArgs {
-                            interactorObject = null,
-                            interactableObject = this
-                        });
+                    // Toggle selection state
+                    isSelected = !isSelected;
+                    if (isSelected)
+                    {
+                        OnNodeSelected();
+                    }
+                    else
+                    {
+                        OnNodeDeselected();
                     }
                 }
             }
         }
 
-        if (isSelected && Time.time - lastMetricUpdateTime >= METRIC_UPDATE_INTERVAL) {
+        if (isSelected && Time.time - lastMetricUpdateTime >= METRIC_UPDATE_INTERVAL) 
+        {
             UpdateMetrics();
             lastMetricUpdateTime = Time.time;
         }
     }
 
-    protected override void OnSelectEntered(SelectEnterEventArgs args) {
-        if (args == null) return;
-        
-        base.OnSelectEntered(args);
-        isSelected = true;
-
-        if (spawnedInfoPanel != null) {
+    private void OnNodeSelected()
+    {
+        if (spawnedInfoPanel != null)
+        {
             spawnedInfoPanel.SetActive(true);
             UpdateInfoPanel();
         }
     }
 
-    protected override void OnSelectExited(SelectExitEventArgs args) {
-        if (args == null) return;
-        
-        base.OnSelectExited(args);
-        isSelected = false;
-
-        if (spawnedInfoPanel != null) {
+    private void OnNodeDeselected()
+    {
+        if (spawnedInfoPanel != null)
+        {
             spawnedInfoPanel.SetActive(false);
         }
     }
 
-    private async void UpdateMetrics() {
-        if (dataLoader != null && nodeData != null) {
+    private async void UpdateMetrics() 
+    {
+        if (dataLoader != null && nodeData != null) 
+        {
             await dataLoader.UpdateNodeMetrics(nodeData);
             UpdateInfoPanel();
         }
     }
 
-    private void UpdateInfoPanel() {
-        if (infoText != null && nodeData != null) {
+    private void UpdateInfoPanel() 
+    {
+        if (infoText != null && nodeData != null) 
+        {
             infoText.text = $"Name: {nodeData.name}\n" +
-                            $"Type: {nodeData.type}\n" +
-                            $"Status: {nodeData.status}\n" +
-                            $"CPU: {nodeData.cpu_usage:F1}%\n" +
-                            $"Memory: {nodeData.memory_usage:F1}%\n" +
-                            $"Position: ({nodeData.positionX:F1}, {nodeData.positionY:F1}, {nodeData.positionZ:F1})\n" +
-                            $"Updated: {nodeData.updatedAt}";
+                           $"Type: {nodeData.type}\n" +
+                           $"Status: {nodeData.status}\n" +
+                           $"CPU: {nodeData.cpu_usage:F1}%\n" +
+                           $"Memory: {nodeData.memory_usage:F1}%\n" +
+                           $"Position: ({nodeData.positionX:F1}, {nodeData.positionY:F1}, {nodeData.positionZ:F1})\n" +
+                           $"Updated: {nodeData.updatedAt}";
         }
     }
 
-    protected override void OnSelectExiting(SelectExitEventArgs args) {
-        if (args == null) return;
-        
-        base.OnSelectExiting(args);
-
-        if (nodeData != null) {
+    private void OnDisable()
+    {
+        if (nodeData != null) 
+        {
             nodeData.positionX = transform.position.x;
             nodeData.positionY = transform.position.y;
             nodeData.positionZ = transform.position.z;
             UpdateMetrics();
         }
     }
+
+#if ENABLE_XR
+    // XR-specific functionality will be added here when XR package is properly installed
+    public void OnXRGrab(SelectEnterEventArgs args)
+    {
+        isSelected = true;
+        OnNodeSelected();
+    }
+
+    public void OnXRRelease(SelectExitEventArgs args)
+    {
+        isSelected = false;
+        OnNodeDeselected();
+    }
+#endif
 } 

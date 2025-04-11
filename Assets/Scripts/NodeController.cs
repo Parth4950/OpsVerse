@@ -1,10 +1,12 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using UnityEngine.XR.Interaction.Toolkit.Filtering;
 using TMPro;
 using System;
 using System.Threading.Tasks;
 
-public class NodeController : UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable {
+public class NodeController : XRGrabInteractable {
     public SystemNode nodeData; // Data from DataLoader
     public GameObject infoPanel; // Assign a UI panel prefab in Inspector
 
@@ -18,14 +20,27 @@ public class NodeController : UnityEngine.XR.Interaction.Toolkit.Interactables.X
     protected override void Awake() {
         base.Awake();
 
-        if (infoPanel != null) {
-            spawnedInfoPanel = Instantiate(infoPanel, transform);
-            spawnedInfoPanel.transform.localPosition = Vector3.up * 1.5f; // Position above node
-            infoText = spawnedInfoPanel.GetComponentInChildren<TextMeshProUGUI>();
-            spawnedInfoPanel.SetActive(false);
+        // Find DataLoader in the scene
+        dataLoader = FindObjectOfType<DataLoader>();
+        if (dataLoader == null) {
+            Debug.LogError("DataLoader not found in the scene!");
         }
 
-        dataLoader = FindObjectOfType<DataLoader>();
+        if (infoPanel != null) {
+            spawnedInfoPanel = Instantiate(infoPanel, transform);
+            if (spawnedInfoPanel != null) {
+                spawnedInfoPanel.transform.localPosition = Vector3.up * 1.5f; // Position above node
+                infoText = spawnedInfoPanel.GetComponentInChildren<TextMeshProUGUI>();
+                if (infoText == null) {
+                    Debug.LogError("TextMeshProUGUI component not found in info panel!");
+                }
+                spawnedInfoPanel.SetActive(false);
+            } else {
+                Debug.LogError("Failed to instantiate info panel!");
+            }
+        } else {
+            Debug.LogWarning("Info panel prefab not assigned!");
+        }
     }
 
     private void Update() {
@@ -37,9 +52,15 @@ public class NodeController : UnityEngine.XR.Interaction.Toolkit.Interactables.X
                     Debug.Log("Tapped on: " + hit.collider.name);
                     // Simulate XR selection for mouse interaction
                     if (!isSelected) {
-                        OnSelectEntered(new SelectEnterEventArgs());
+                        OnSelectEntered(new SelectEnterEventArgs {
+                            interactorObject = null,
+                            interactableObject = this
+                        });
                     } else {
-                        OnSelectExited(new SelectExitEventArgs());
+                        OnSelectExited(new SelectExitEventArgs {
+                            interactorObject = null,
+                            interactableObject = this
+                        });
                     }
                 }
             }
@@ -52,21 +73,26 @@ public class NodeController : UnityEngine.XR.Interaction.Toolkit.Interactables.X
     }
 
     protected override void OnSelectEntered(SelectEnterEventArgs args) {
+        if (args == null) return;
+        
         base.OnSelectEntered(args);
         isSelected = true;
 
-        if (spawnedInfoPanel != null)
+        if (spawnedInfoPanel != null) {
             spawnedInfoPanel.SetActive(true);
-
-        UpdateInfoPanel();
+            UpdateInfoPanel();
+        }
     }
 
     protected override void OnSelectExited(SelectExitEventArgs args) {
+        if (args == null) return;
+        
         base.OnSelectExited(args);
         isSelected = false;
 
-        if (spawnedInfoPanel != null)
+        if (spawnedInfoPanel != null) {
             spawnedInfoPanel.SetActive(false);
+        }
     }
 
     private async void UpdateMetrics() {
@@ -89,6 +115,8 @@ public class NodeController : UnityEngine.XR.Interaction.Toolkit.Interactables.X
     }
 
     protected override void OnSelectExiting(SelectExitEventArgs args) {
+        if (args == null) return;
+        
         base.OnSelectExiting(args);
 
         if (nodeData != null) {

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpsVerse.Backend.Models;
+using Microsoft.Extensions.Logging;
 
 namespace OpsVerse.Backend.Controllers
 {
@@ -13,10 +14,12 @@ namespace OpsVerse.Backend.Controllers
     public class MetricsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<MetricsController> _logger;
 
-        public MetricsController(ApplicationDbContext context)
+        public MetricsController(ApplicationDbContext context, ILogger<MetricsController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -84,5 +87,69 @@ namespace OpsVerse.Backend.Controllers
 
             return CreatedAtAction(nameof(GetMetrics), metrics);
         }
+
+        [HttpPost("nodes/{nodeId}")]
+        public async Task<IActionResult> UpdateMetrics(Guid nodeId, [FromBody] MetricUpdateDto metrics)
+        {
+            try
+            {
+                var node = await _context.Nodes.FindAsync(nodeId);
+                if (node == null)
+                {
+                    return NotFound($"Node with ID {nodeId} not found");
+                }
+
+                // Update node metadata
+                node.Metadata = new
+                {
+                    cpu_usage = metrics.CpuUsage,
+                    memory_usage = metrics.MemoryUsage
+                };
+                node.UpdatedAt = DateTime.UtcNow;
+
+                // Add new metric record
+                var metric = new Metric
+                {
+                    NodeId = nodeId,
+                    MetricName = "performance",
+                    MetricValue = metrics.CpuUsage
+                };
+                _context.Metrics.Add(metric);
+
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating metrics for node {NodeId}", nodeId);
+                return StatusCode(500, "An error occurred while updating metrics");
+            }
+        }
+
+        [HttpGet("nodes/{nodeId}/history")]
+        public async Task<IActionResult> GetMetricHistory(Guid nodeId, [FromQuery] int hours = 24)
+        {
+            try
+            {
+                var cutoffTime = DateTime.UtcNow.AddHours(-hours);
+                var metrics = await _context.Metrics
+                    .Where(m => m.NodeId == nodeId && m.Timestamp >= cutoffTime)
+                    .OrderBy(m => m.Timestamp)
+                    .ToListAsync();
+
+                return Ok(metrics);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving metric history for node {NodeId}", nodeId);
+                return StatusCode(500, "An error occurred while retrieving metric history");
+            }
+        }
+    }
+
+    public class MetricUpdateDto
+    {
+        public float CpuUsage { get; set; }
+        public float MemoryUsage { get; set; }
     }
 }

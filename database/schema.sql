@@ -80,3 +80,13 @@ CREATE TABLE IF NOT EXISTS annotations (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (node_id) REFERENCES nodes(node_id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS system_logs (
+    log_id CHAR(36) PRIMARY KEY, -- UUID stored as string
+    node_id CHAR(36), -- must match the referenced type
+    log_level VARCHAR(20) NOT NULL, -- INFO, WARNING, ERROR, DEBUG
+    message TEXT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    metadata JSON, -- JSON instead of JSONB
+    FOREIGN KEY (node_id) REFERENCES nodes(node_id)
+);

@@ -22,8 +22,8 @@ public class NodeController : MonoBehaviour
 
     private void Awake() 
     {
-        // Find DataLoader in the scene
-        dataLoader = FindObjectOfType<DataLoader>();
+        // Find DataLoader in the scene using the new method
+        dataLoader = FindFirstObjectByType<DataLoader>();
         if (dataLoader == null)
         {
             Debug.LogError("DataLoader not found in the scene!");
@@ -80,7 +80,7 @@ public class NodeController : MonoBehaviour
 
         if (isSelected && Time.time - lastMetricUpdateTime >= METRIC_UPDATE_INTERVAL) 
         {
-            UpdateMetrics();
+            UpdateMetricsAsync();
             lastMetricUpdateTime = Time.time;
         }
     }
@@ -102,12 +102,19 @@ public class NodeController : MonoBehaviour
         }
     }
 
-    private async void UpdateMetrics() 
+    private async void UpdateMetricsAsync() 
     {
         if (dataLoader != null && nodeData != null) 
         {
-            await dataLoader.UpdateNodeMetrics(nodeData);
-            UpdateInfoPanel();
+            try 
+            {
+                await dataLoader.UpdateNodeMetricsAsync(nodeData);
+                UpdateInfoPanel();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error updating metrics: {e.Message}");
+            }
         }
     }
 
@@ -132,7 +139,7 @@ public class NodeController : MonoBehaviour
             nodeData.positionX = transform.position.x;
             nodeData.positionY = transform.position.y;
             nodeData.positionZ = transform.position.z;
-            UpdateMetrics();
+            UpdateMetricsAsync();
         }
     }
 

@@ -65,7 +65,7 @@ public class DataLoader : MonoBehaviour {
     private async void StartWebSocketConnection() {
         try {
             // Implement WebSocket connection here
-            // This is a placeholder - you'll need to use a WebSocket library
+            await Task.Delay(1); // Placeholder for actual WebSocket implementation
             Debug.Log("WebSocket connection started");
         }
         catch (Exception e) {
@@ -73,7 +73,9 @@ public class DataLoader : MonoBehaviour {
         }
     }
     
-    private async Task UpdateNodeMetrics(SystemNode node) {
+    public async Task UpdateNodeMetricsAsync(SystemNode node) {
+        if (node == null) throw new ArgumentNullException(nameof(node));
+        
         try {
             var metrics = new {
                 CpuUsage = node.cpu_usage,
@@ -92,11 +94,12 @@ public class DataLoader : MonoBehaviour {
             );
             
             if (!response.IsSuccessStatusCode) {
-                Debug.LogError($"Failed to update metrics for node {node.name}");
+                throw new Exception($"Failed to update metrics: {response.StatusCode}");
             }
         }
         catch (Exception e) {
-            Debug.LogError($"Error updating metrics: {e.Message}");
+            Debug.LogError($"Error updating metrics for node {node.name}: {e.Message}");
+            throw; // Rethrow to let caller handle the error
         }
     }
     
